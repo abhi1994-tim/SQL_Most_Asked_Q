@@ -1,0 +1,423 @@
+practice--  file for SQL
+
+-- 1. To join two tables
+
+select * from employees
+natural join departments
+
+select * from employees
+join departments
+
+-- 2. second highest salary
+
+select max(salary)
+from employees where salary < (select max(salary) from employees);
+
+-- 3. Nth highest salary
+
+select  department_id, salary,
+nth_value(salary,2) over(order by salary desc)as "second_high"
+from employee.employees;
+
+-- 4. Rank the scores--  (like salary wise ranking)
+
+select first_name, email, salary,
+rank() over(order by salary) as Ranking
+from employees;
+
+-- 4. Rank the salry using the dense Rank()
+
+select first_name, email, salary,
+dense_rank() over(order by salary) as Ranking
+from employees;
+
+-- 5. write the query to find the number with consecutive 3 times
+
+-- table name logs
+-- logid num
+-- 1   	1 
+-- 2	1
+-- 3	1
+-- 4	2
+-- 5	2
+
+-- this code for 2 cioncecutive number 
+
+select distict l1.num from logs l1 join logs l2
+on l1.id = l2.id-1
+and l1.num = l2.num 
+
+-- This code for the 3 consecutive number 
+
+select distinct l1.num from logs l1, logs l2, logs l3
+where l1.id = l2.id-1 and l2.id = l3.id-1
+and l1.num = l2.num and l2.num = l3.num
+
+-- 6. Employee earning money more than their managers-- 
+
+select e1.first_name, e1.salary from employees as e1
+join employees as e2
+on e1.manager_id = e2.employee_id
+where e1.salary > e2.salary
+
+-- 7. write a sql query to find the duplicate emails
+
+select count(email) from employees
+group by email
+having count(email) > 1
+
+-- 8. Customer who never order
+
+-- id 	name     			id     custid
+-- 1			Phani		1			3
+-- 2			Abhi		2			1
+-- 3			varad
+-- 4			Ankit			oo\/p - Abhi & Ankit
+
+select name from customer
+where id not in(
+select custid from order
+)
+
+-- another way to get the result
+
+select name from customer as c
+left join order as o on
+c.id = o.custid
+where o.custid is null
+
+-- 9. Department highest salary
+
+select d.department_name , max(e.salary) as "depart_max_salary"
+from employees as e left join departments as d
+on d.department_id = e.department_id 
+group by department_name
+
+-- 9. Department highest salary top three
+
+select d.department_name , max(e.salary) as "depart_max_salary"
+from employees as e left join departments as d
+on d.department_id = e.department_id 
+group by department_name
+limit 3
+
+-- using windows function
+
+select d.department_name, max(e.salary),
+dense_rank() over(partition by d.department_id order by e.salary desc) as "high_dept_salary"
+from employees as e left join departments as d
+
+
+-- 10. Department top three salaries
+
+
+with cte as(
+select d.department_name, e.salary,
+dense_rank() over(partition by d.department_id order by e.salary) as highest_top3
+from employees  as e inner join departments as d
+on e.department_id = d.department_id
+)
+select * from cte 
+where highest_top3 <=3
+
+-- 11. Delete duplicate emails
+(not sure about this)
+
+delete email
+from employees as e, 
+employees as s 
+where e.id > s.id 
+and e.email = s.email;
+
+
+-- 12. Write an SQL query to find all dates' Id with higher temperatures compared to its previous dates 
+-- (yesterday).
+
+select id
+from weather w1 join weather w2 on
+w1.id = w2.id
+where datediff(w1.recordDate, w2.recorDate) = 1 and
+w1.temprature > w2.temprature
+
+
+-- 14. Write an SQL query to report the names of the customer that are not referred by the 
+-- customer with id = 2.
+
+
+select name from customer
+where refree_id!=2 or refree_id is Null
+
+-- 15. Write an SQL query to find the customer_number for the customer who has placed the largest 
+-- number of orders.
+
+select customer_number from customer
+group by orders
+order by count(customer_number) desc
+
+-- 16. Write an SQL query to report the name, population, and area of the big countries.
+
+select name, population, area from world
+where population > ----- or area > ----
+
+-- 17. Write an SQL query to report all the classes that have at least five students.
+
+select class from courses
+group by class
+having count(student) >= 5
+
+
+-- 19. Write an SQL query to report the names of all the
+-- related to the company with the name "RED". 
+
+select s.name from salesperson as s where sales_id not in (
+select sales_id from orders as o
+left joim company as c on
+o.com_id = c.com_id
+where c.name = "red"
+)
+
+
+-- 20. Tree Node
+
+SELECT id, 
+CASE
+        WHEN p_id IS NULL THEN 'Root'
+        WHEN id IN (SELECT p_id from Tree) THEN 'Inner'
+        ELSE 'Leaf'
+    END AS type
+FROM Tree;
+
+
+-- 21. Write an SQL query to report the movies with an odd-numbered ID and a description 
+-- that is not "boring".
+
+select * from Cinema
+where id % 2 = 1 and description != "boring"
+
+-- 22. Write an SQL query to swap all 'f' and 'm' values (i.e., change all 'f' values
+-- single update statement and no intermediate temporary tables.
+
+update salary set sex = 
+case when "M" then "f"
+else "m"
+end
+
+-- 23. Actors and Directors Who Cooperated At Least Three Times
+
+select actor_id , director_id
+from ActorDirector
+group by actor_id, director_id
+having count(actor_id, director_id) >=3
+
+
+-- 24. Write an SQL query that reports the products that were only sold 2019.
+-- That is, between 2019-01-01 and 2019-03-31 inclusive.
+
+select product_id, product_name
+from product as p left join Sales as s on
+s.product_id = p.product_id
+having min(sale_date) >= '2019-01-01' and max(sale_date) <= '2019-03-31'
+
+-- 26. Write an SQL query to report the first login date for each player.
+
+select player_id, min(event_date) as first_login
+from Activity
+group by player_id
+
+-- 27.   Write an SQL query to find the daily active user count for a period of 30 days ending 
+-- 2019-07-27 inclusively. A user was active on someday if they made at least one 
+-- activity on that day.
+
+select distinct activity_date as day,
+count(distinct user_id) as active_users from Activity
+where activity_date between '2019-06-28' and '2019-07-27'
+group by activity_date
+
+
+-- 28.  Write an SQL query to find all the authors that viewed at least one of their own articles.
+
+select distinct author_id as id
+from views
+where author_id = viewer_id
+order by id asc;
+
+
+-- 29.   Write an SQL query to find for made as a buyer in 2019.
+
+select user_id as buyer_id , join_date,
+ifnull(count(order_date), 0) as order_in_2019
+from users u 
+join orders as o
+on u.user_id = o.buyer_id and year(order_date) ="2019"
+group by user_id
+
+
+-- 30.  Write an SQL query to reformat the table such that there is a department id column 
+-- and a revenue column for each month.
+
+
+select id, 
+	sum(case when month = 'jan' then revenue else null end) as Jan_Revenue,
+	sum(case when month = 'feb' then revenue else null end) as Feb_Revenue,
+	sum(case when month = 'mar' then revenue else null end) as Mar_Revenue,
+	sum(case when month = 'apr' then revenue else null end) as Apr_Revenue,
+	sum(case when month = 'may' then revenue else null end) as May_Revenue,
+	sum(case when month = 'jun' then revenue else null end) as Jun_Revenue,
+	sum(case when month = 'jul' then revenue else null end) as Jul_Revenue,
+	sum(case when month = 'aug' then revenue else null end) as Aug_Revenue,
+	sum(case when month = 'sep' then revenue else null end) as Sep_Revenue,
+	sum(case when month = 'oct' then revenue else null end) as Oct_Revenue,
+	sum(case when month = 'nov' then revenue else null end) as Nov_Revenue,
+	sum(case when month = 'dec' then revenue else null end) as Dec_Revenue
+from department
+group by id
+order by id
+
+-- 32. Write an SQL query to report the distance traveled by each user.
+
+select u.name, sum(ifnull(r.distance, 0)) as travelled_distance
+from users as u left join Rides as r on
+r.user_id = u.id
+group by name
+order by travelled_distance desc
+
+-- 33. Write an SQL query to find for each date the number of different products sold and 
+-- their names.
+
+select sell_date, count(distict product) as num_sold, 
+group_concat(distinct product)as products
+from Activities
+group by sell_date
+order by sell_date asc;
+
+-- 34. Write an SQL query to report the patient_id, patient_name and conditions of the 
+-- patients who have Type I Diabetes. Type I Diabetes always starts with DIAB1 prefix.
+
+
+select patient_id, patient_name, conditions
+	from patitents
+where condition LIKE %DIAB1% or condition DIAB1%
+(optional or statement)
+
+
+-- 35. Write a SQL query to find the IDs of the users who visited without making any 
+-- transactions and the number of times they made these types of visits.
+
+select v.customer_id, count(v.visit_id) as count_no_trans
+from visits  as v
+left join Transactions as t on
+t.visit_id = v.visit_id
+where t.transaction_id  is null
+group by v.customer_id;
+
+-- 36. Write an SQL query to report the name and balance of users with a balance higher 
+-- than 10000. The balance of an account is equal to the sum of the amounts of all 
+-- transactions involving that account
+
+
+SELECT u.name AS NAME,SUM(t.amount) AS BALANCE
+FROM Transactions t LEFT JOIN Users u
+ON u.account = t.account
+GROUP BY u.account 
+HAVING SUM(t.amount)>10000;
+
+-- Another way-- 
+
+
+select name, balance
+from (select account, sum(amount) as balance
+    from Transactions
+    group by account
+    having sum(amount) > 10000) t
+join Users u
+on u.account = t.account;
+
+
+-- 37. Write an SQL query to fix the names so that only the first character is uppercase and the rest 
+-- are lowercase.
+
+select user_id, 
+    concat(upper(left(name,1)),lower(substring(name,2))) as name
+from Users 
+order by user_id
+
+-- 38. Write an SQL query that will, for each date_id and make_name, return the number of distinct 
+-- lead_id's and distinct partner_id's.
+
+
+select date_id, make_name,
+count(distinct lead_id) as unique_id,
+count(distinct partner_id) as unique partners
+from DailySales
+group by date_id, make_name;
+
+
+-- 39. Write an SQL query that will, for each user, return the number of followers.
+
+select user_id, count(distinct follower_id) as followers_count
+from followers
+group by user_id
+order by user_id
+
+-- 41. Write an SQL query to find the ids of products that are both low fat and recyclable.
+
+select product_id
+from Products
+where low_fats ="Y" and recyclable = "Y"
+order by product_id
+
+
+-- 42.  Write an SQL query to rearrange the Products table so that each row has (product_id, store, price). If 
+-- a product is not available in a store, do not include a row with that product_id and store 
+-- combination in the result table.
+
+select product_id , "store1" as store , store1 as price
+from Products
+where store1 is not null
+
+union
+
+select product_id , "store2" as store , store2 as price
+from Products
+where store2 is not null
+
+union
+
+select product_id , "store3" as store , store3 as price
+from Products
+where store3 is not null
+
+
+-- 43.    Write an SQL query to calculate the bonus of each employee. The bonus of an 
+-- employee is 100% of their salary if the ID of the employee is an odd number and the 
+-- employee name does not start with the character 'M'. The bonus of an employee is 0 
+-- otherwise.
+
+
+SELECT employee_id, 
+	case
+	WHEN employee_id % 2 <> 0 AND LEFT(name, 1) <> 'M' THEN salary
+	ELSE 0
+	END AS bonus
+FROM Employees
+ORDER BY employee_id;
+
+
+-- 44. Write an SQL query to report the latest login for all users in the year 2020. Do not 
+-- include the users who did not login in 2020.
+
+SELECT user_id, MAX(time_stamp) AS last_stamp
+FROM Logins
+WHERE YEAR(time_stamp) = "2020"
+GROUP BY user_id;
+
+
+-- 45. Write an SQL query to report the IDs of all the employees with missing information. The
+-- information of an employee is missing if6
+-- * The employee's name is missing, oA
+-- * The employee's salary is missing.
+
+select employee_id from employees where employee_id not in (select employee_id from Salaries)
+union 
+select employee_id from salaries where employee_id not in (select employee_id from employees)
+order by employee_id
